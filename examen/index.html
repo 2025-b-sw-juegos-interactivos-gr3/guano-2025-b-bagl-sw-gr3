@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mensajero Espacial - Babylon.js</title>
+    <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+
+    <div id="hud">
+        <div id="status">Estado: <span id="estado-text">Sin paquete</span></div>
+        <div id="instructions">Mover: WASD / Flechas • Acción: <strong>Espacio</strong></div>
+        <div id="delivered">Entregados: <span id="del-count">0</span></div>
+    </div>
+
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>
