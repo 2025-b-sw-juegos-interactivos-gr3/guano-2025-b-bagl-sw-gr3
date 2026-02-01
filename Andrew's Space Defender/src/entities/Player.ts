@@ -23,14 +23,22 @@ export class Player {
     private speed: number = 8;
     private shootCooldown: number = 0;
     private shootDelay: number = 0.25;
+    private baseShootDelay: number;
+    private baseSpeed: number;
     private invulnerable: boolean = false;
     private invulnerableTime: number = 0;
+    private rapidFireTime: number = 0;
+    private speedBoostTime: number = 0;
+    private doubleShotTime: number = 0;
     private modelLoaded: boolean = false;
 
     constructor(scene: Scene, bounds: any) {
         this.scene = scene;
         this.bounds = bounds;
         this.position = new Vector3(0, -8, 0);
+
+        this.baseShootDelay = this.shootDelay;
+        this.baseSpeed = this.speed;
 
         this.createMesh();
         this.loadModel();
@@ -115,6 +123,27 @@ export class Player {
             }
         }
 
+        // Handle rapid fire duration
+        if (this.rapidFireTime > 0) {
+            this.rapidFireTime -= deltaTime;
+            if (this.rapidFireTime <= 0) {
+                this.shootDelay = this.baseShootDelay;
+            }
+        }
+
+        // Handle speed boost duration
+        if (this.speedBoostTime > 0) {
+            this.speedBoostTime -= deltaTime;
+            if (this.speedBoostTime <= 0) {
+                this.speed = this.baseSpeed;
+            }
+        }
+
+        // Handle double shot duration
+        if (this.doubleShotTime > 0) {
+            this.doubleShotTime -= deltaTime;
+        }
+
         // Update shoot cooldown
         if (this.shootCooldown > 0) {
             this.shootCooldown -= deltaTime;
@@ -169,6 +198,41 @@ export class Player {
             this.invulnerable = true;
             this.invulnerableTime = 2;
         }
+    }
+
+    public addLife(): void {
+        this.lives++;
+        this.updateLivesUI();
+    }
+
+    public enableRapidFire(): void {
+        // Reducir el tiempo entre disparos durante unos segundos
+        this.shootDelay = this.baseShootDelay * 0.4;
+        this.rapidFireTime = 5; // segundos
+    }
+
+    public enableSpeedBoost(): void {
+        // Aumentar velocidad de desplazamiento durante unos segundos
+        this.speed = this.baseSpeed * 1.5;
+        this.speedBoostTime = 5; // segundos
+    }
+
+    public enableDoubleShot(): void {
+        // Activar disparo doble durante unos segundos
+        this.doubleShotTime = 5; // segundos
+    }
+
+    public isDoubleShotActive(): boolean {
+        return this.doubleShotTime > 0;
+    }
+
+    public shootSecondary(): Projectile | null {
+        // Disparo adicional sin afectar cooldown (ya aplicado en shoot)
+        const projectilePos = this.position.clone();
+        projectilePos.y += 0.5;
+        projectilePos.x += 0.6;
+
+        return new Projectile(this.scene, projectilePos, true);
     }
 
     private updateLivesUI(): void {

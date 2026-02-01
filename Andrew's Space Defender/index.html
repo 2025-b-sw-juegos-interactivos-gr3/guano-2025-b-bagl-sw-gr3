@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Defender - POC</title>
+    <!-- Favicon embebido para evitar 404 en /favicon.ico -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Cpolygon points='32,4 40,24 60,24 44,36 50,56 32,44 14,56 20,36 4,24 24,24' fill='%23ffffff'/%3E%3C/svg%3E">
     <style>
         body {
             margin: 0;
@@ -29,6 +31,7 @@
             height: 100%;
             pointer-events: none;
             z-index: 10;
+            display: none;
         }
 
         #score {
@@ -152,11 +155,100 @@
         #restart-button-win:active {
             transform: scale(0.95);
         }
+
+        /* Menú principal */
+        #main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at top, #222 0, #000 60%);
+            color: #fff;
+            z-index: 20;
+            text-align: center;
+        }
+
+        #main-menu h1 {
+            font-size: 48px;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+        }
+
+        .menu-button {
+            margin: 10px 0;
+            padding: 12px 40px;
+            font-size: 22px;
+            background: #111;
+            color: #0ff;
+            border: 2px solid #0ff;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-button:hover {
+            background: #0ff;
+            color: #000;
+        }
+
+        /* Panel de scores */
+        #scores-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            z-index: 25;
+            text-align: center;
+        }
+
+        #scores-panel h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        #scores-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        #scores-list li {
+            margin: 4px 0;
+            font-size: 18px;
+        }
     </style>
 </head>
 
 <body>
     <canvas id="renderCanvas"></canvas>
+
+    <div id="main-menu">
+        <h1>SPACE DEFENDER</h1>
+        <button id="menu-start" class="menu-button">INICIAR JUEGO</button>
+        <button id="menu-scores" class="menu-button">VER SCORES</button>
+    </div>
+
+    <div id="scores-panel">
+        <h2>Scores</h2>
+        <ul id="scores-list"></ul>
+        <button id="scores-back" class="menu-button">VOLVER AL MENÚ</button>
+    </div>
 
     <div id="ui-overlay">
         <div id="lives">LIVES: <span id="lives-count">3</span></div>
@@ -170,6 +262,7 @@
         <div id="game-over">
             <div>GAME OVER</div>
             <button id="restart-button">RESTART</button>
+            <button id="menu-button" style="margin-left: 10px; padding: 10px 30px; font-size: 20px; background: #333; color: #fff; border: 2px solid #fff; cursor: pointer; pointer-events: auto; font-family: 'Courier New', monospace;">MENU</button>
         </div>
 
         <div id="you-win">

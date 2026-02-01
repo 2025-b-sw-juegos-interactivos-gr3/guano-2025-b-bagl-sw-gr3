@@ -9,7 +9,7 @@ import {
 
 export class Projectile {
     private scene: Scene;
-    public mesh: Mesh;
+    public mesh!: Mesh;
     public position: Vector3;
     public isFromPlayer: boolean;
 

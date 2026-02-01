@@ -1,5 +1,6 @@
-import { Engine, Scene, Vector3, Color3, Color4, HemisphericLight } from '@babylonjs/core';
+import { Engine, Scene, Color4 } from '@babylonjs/core';
 import { GameScene } from './scenes/GameScene';
+import { ScoreManager } from './managers/ScoreManager';
 
 class Game {
     private canvas: HTMLCanvasElement;
@@ -34,11 +35,73 @@ class Game {
             this.scene.render();
         });
 
+        const uiOverlay = document.getElementById('ui-overlay');
+        const mainMenu = document.getElementById('main-menu');
+        const scoresPanel = document.getElementById('scores-panel');
+        const scoresList = document.getElementById('scores-list');
+
+        // Botón de iniciar juego desde el menú
+        const menuStart = document.getElementById('menu-start');
+        if (menuStart && uiOverlay && mainMenu) {
+            menuStart.addEventListener('click', () => {
+                mainMenu.style.display = 'none';
+                uiOverlay.style.display = 'block';
+                this.gameScene.restart();
+            });
+        }
+
+        // Mostrar scores
+        const menuScores = document.getElementById('menu-scores');
+        if (menuScores && mainMenu && scoresPanel && scoresList) {
+            menuScores.addEventListener('click', () => {
+                mainMenu.style.display = 'none';
+                scoresPanel.style.display = 'flex';
+
+                scoresList.innerHTML = '';
+                const scores = ScoreManager.getScores();
+                if (!scores.length) {
+                    const li = document.createElement('li');
+                    li.textContent = 'No hay partidas registradas aún.';
+                    scoresList.appendChild(li);
+                } else {
+                    // Mostrar del último al primero
+                    scores.slice().reverse().forEach((entry, index) => {
+                        const li = document.createElement('li');
+                        const date = new Date(entry.date);
+                        li.textContent = `${index + 1}. ${entry.score} puntos - ${date.toLocaleString()}`;
+                        scoresList.appendChild(li);
+                    });
+                }
+            });
+        }
+
+        // Volver al menú desde el panel de scores
+        const scoresBack = document.getElementById('scores-back');
+        if (scoresBack && mainMenu && scoresPanel) {
+            scoresBack.addEventListener('click', () => {
+                scoresPanel.style.display = 'none';
+                mainMenu.style.display = 'flex';
+            });
+        }
+
         // Handle restart button
         const restartButton = document.getElementById('restart-button');
         if (restartButton) {
             restartButton.addEventListener('click', () => {
                 this.gameScene.restart();
+            });
+        }
+
+        // Volver al menú desde Game Over
+        const menuButton = document.getElementById('menu-button');
+        if (menuButton && mainMenu && uiOverlay) {
+            menuButton.addEventListener('click', () => {
+                const gameOverDiv = document.getElementById('game-over');
+                if (gameOverDiv) {
+                    gameOverDiv.style.display = 'none';
+                }
+                uiOverlay.style.display = 'none';
+                mainMenu.style.display = 'flex';
             });
         }
 

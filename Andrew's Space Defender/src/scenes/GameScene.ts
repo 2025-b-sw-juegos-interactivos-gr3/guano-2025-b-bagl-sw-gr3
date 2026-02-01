@@ -8,7 +8,8 @@ import {
     MeshBuilder,
     StandardMaterial,
     Texture,
-    Mesh
+    Mesh,
+    Vector3 as BabylonVector3
 } from '@babylonjs/core';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
@@ -20,6 +21,7 @@ import { SpawnSystem } from '../systems/SpawnSystem';
 import { ScoreManager } from '../managers/ScoreManager';
 import { AudioManager } from '../managers/AudioManager';
 import { ExplosionSystem } from '../systems/ParticleSystem';
+import { PowerUp, PowerUpType } from '../entities/PowerUp';
 
 export class GameScene {
     private scene: Scene;
@@ -30,6 +32,7 @@ export class GameScene {
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
     private projectiles: Projectile[] = [];
+    private powerUps: PowerUp[] = [];
     private enemiesKilled: number = 0;
     private bossSpawned: boolean = false;
 
@@ -41,6 +44,9 @@ export class GameScene {
     private explosionSystem: ExplosionSystem;
 
     private gameOver: boolean = false;
+    private currentLevel: number = 1;
+    private enemySpeedMultiplier: number = 1;
+    private bossScoreThreshold: number = 2000;
     private bounds = {
         minX: -8,
         maxX: 8,
@@ -71,6 +77,9 @@ export class GameScene {
 
         // Create spawn system
         this.spawnSystem = new SpawnSystem(this.scene, this.bounds);
+
+        // Configurar dificultad inicial
+        this.updateDifficultyForLevel();
 
         // Start background music
         this.audioManager.playBackgroundMusic();
@@ -133,9 +142,15 @@ export class GameScene {
     }
 
     private spawnInitialEnemies(): void {
-        // Spawn enemies in formation like Galaga
-        const rows = 3;
-        const cols = 8;
+        // Spawn enemies in formation like Galaga, escalando por nivel
+        const baseRows = 3;
+        const baseCols = 8;
+
+        const extraRows = Math.min(this.currentLevel - 1, 3); // hasta 6 filas
+        const extraCols = Math.min(this.currentLevel - 1, 4); // hasta 12 columnas
+
+        const rows = baseRows + Math.max(0, extraRows);
+        const cols = baseCols + Math.max(0, extraCols);
         const spacing = 2;
         const startX = -(cols - 1) * spacing / 2;
         const startY = 6;
@@ -146,6 +161,7 @@ export class GameScene {
                 const y = startY - row * 1.5;
 
                 const enemy = new Enemy(this.scene, new Vector3(x, y, 0), row);
+                enemy.setSpeedMultiplier(this.enemySpeedMultiplier);
                 this.enemies.push(enemy);
             }
         }
@@ -163,6 +179,14 @@ export class GameScene {
             if (projectile) {
                 this.projectiles.push(projectile);
                 this.audioManager.playShoot();
+
+                // Si hay disparo doble activo, crear un proyectil adicional
+                if ((this.player as any).isDoubleShotActive && (this.player as any).isDoubleShotActive()) {
+                    const extra = (this.player as any).shootSecondary();
+                    if (extra) {
+                        this.projectiles.push(extra);
+                    }
+                }
             }
         }
 
@@ -199,8 +223,26 @@ export class GameScene {
             }
         }
 
+        // Update power-ups
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            powerUp.update(deltaTime);
+
+            // Remove if out of bounds
+            if (powerUp.position.y < this.bounds.minY - 2) {
+                powerUp.dispose();
+                this.powerUps.splice(i, 1);
+            }
+        }
+
         // Check collisions
         this.checkCollisions();
+
+        // Condición global de victoria por puntuación
+        if (!this.gameOver && this.scoreManager.getScore() >= 15000) {
+            this.winGame();
+            return;
+        }
 
         // Update boss if exists
         if (this.boss) {
@@ -214,15 +256,17 @@ export class GameScene {
             this.updateBossHealthBar();
         }
 
-        // Spawn boss when score reaches 2000
-        if (!this.bossSpawned && this.scoreManager.getScore() >= 2000) {
+        // Spawn boss when score alcanza el umbral actual (que se duplica cada nivel)
+        if (!this.bossSpawned && this.scoreManager.getScore() >= this.bossScoreThreshold) {
             this.spawnBoss();
         }
 
         // Spawn new enemies only if no boss
-        if (!this.boss && this.enemies.length < 5 && Math.random() < 0.02) {
+        const spawnChance = 0.02 + 0.005 * (this.currentLevel - 1); // leve aumento por nivel
+        if (!this.boss && this.enemies.length < 5 + this.currentLevel && Math.random() < spawnChance) {
             const newEnemy = this.spawnSystem.spawnEnemy();
             if (newEnemy) {
+                newEnemy.setSpeedMultiplier(this.enemySpeedMultiplier);
                 this.enemies.push(newEnemy);
             }
         }
@@ -280,6 +324,7 @@ export class GameScene {
         // Player projectiles vs enemies
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const projectile = this.projectiles[i];
+            if (!projectile) continue;
 
             if (!projectile.isFromPlayer) continue;
 
@@ -302,8 +347,11 @@ export class GameScene {
                     this.boss = null;
                     this.scoreManager.addScore(1000);
                     
-                    // YOU WIN!
-                    this.winGame();
+                    // Pasar al siguiente nivel
+                    this.startNextLevel();
+
+                    // Hemos limpiado proyectiles/enemigos, salir de la detección de colisiones
+                    return;
                 }
                 continue;
             }
@@ -324,6 +372,9 @@ export class GameScene {
 
                     this.scoreManager.addScore(100);
                     this.enemiesKilled++;
+
+                    // Posible aparición de mejora
+                    this.maybeSpawnPowerUp(enemy.position.clone());
                     break;
                 }
             }
@@ -332,6 +383,7 @@ export class GameScene {
         // Enemy projectiles vs player
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const projectile = this.projectiles[i];
+            if (!projectile) continue;
 
             if (projectile.isFromPlayer) continue;
 
@@ -363,11 +415,26 @@ export class GameScene {
                 this.player.takeDamage();
             }
         }
+
+        // Power-ups vs player
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+
+            if (this.collisionSystem.checkCollision(powerUp, this.player)) {
+                this.applyPowerUpToPlayer(powerUp);
+
+                powerUp.dispose();
+                this.powerUps.splice(i, 1);
+            }
+        }
     }
 
     private endGame(): void {
         this.gameOver = true;
         this.audioManager.stopBackgroundMusic();
+
+        // Guardar score de la partida
+        this.scoreManager.saveFinalScore();
 
         const gameOverDiv = document.getElementById('game-over');
         if (gameOverDiv) {
@@ -375,9 +442,50 @@ export class GameScene {
         }
     }
 
+    private updateDifficultyForLevel(): void {
+        // Aumentar ligeramente la velocidad de los enemigos por nivel
+        this.enemySpeedMultiplier = 1 + (this.currentLevel - 1) * 0.2;
+
+        // Actualizar UI de nivel si existe
+        const levelElement = document.getElementById('level-text');
+        if (levelElement) {
+            levelElement.textContent = `Level ${this.currentLevel}`;
+        }
+    }
+
+    private startNextLevel(): void {
+        // Limpiar restos del nivel anterior
+        this.enemies.forEach(e => e.dispose());
+        this.projectiles.forEach(p => p.dispose());
+        this.powerUps.forEach(p => p.dispose());
+
+        this.enemies = [];
+        this.projectiles = [];
+        this.powerUps = [];
+        this.enemiesKilled = 0;
+        this.bossSpawned = false;
+
+        // Avanzar nivel y actualizar dificultad
+        this.currentLevel++;
+        this.updateDifficultyForLevel();
+
+        // Duplicar el umbral de puntuación necesario para el próximo jefe
+        this.bossScoreThreshold *= 2;
+
+        // Recolocar al jugador en la parte baja centrado
+        this.player.position = new Vector3(0, this.bounds.minY + 2, 0);
+        (this.player as any).mesh.position.copyFrom(this.player.position);
+
+        // Spawnear nueva oleada inicial
+        this.spawnInitialEnemies();
+    }
+
     private winGame(): void {
         this.gameOver = true;
         this.audioManager.stopBackgroundMusic();
+
+        // Guardar score de la partida
+        this.scoreManager.saveFinalScore();
 
         // Update final score
         const finalScoreEl = document.getElementById('final-score');
@@ -412,6 +520,7 @@ export class GameScene {
         this.player.dispose();
         this.enemies.forEach(e => e.dispose());
         this.projectiles.forEach(p => p.dispose());
+        this.powerUps.forEach(p => p.dispose());
         if (this.boss) {
             this.boss.dispose();
             this.boss = null;
@@ -419,8 +528,16 @@ export class GameScene {
 
         this.enemies = [];
         this.projectiles = [];
+        this.powerUps = [];
         this.enemiesKilled = 0;
         this.bossSpawned = false;
+
+        // Reiniciar umbral de jefe al valor base
+        this.bossScoreThreshold = 2000;
+
+        // Reiniciar nivel y dificultad
+        this.currentLevel = 1;
+        this.updateDifficultyForLevel();
 
         // Reset
         this.player = new Player(this.scene, this.bounds);
@@ -431,5 +548,37 @@ export class GameScene {
         this.audioManager.playBackgroundMusic();
 
         this.gameOver = false;
+    }
+
+    private maybeSpawnPowerUp(position: Vector3): void {
+        // Probabilidad baja de soltar una mejora
+        const dropChance = 0.05;
+        if (Math.random() > dropChance) {
+            return;
+        }
+
+        // Elegir tipo de mejora aleatorio
+        const types = [PowerUpType.MoveSpeed, PowerUpType.RapidFire, PowerUpType.DoubleShot];
+        const randomType = types[Math.floor(Math.random() * types.length)];
+
+        const spawnPos = position.clone();
+        spawnPos.y -= 0.5;
+
+        const powerUp = new PowerUp(this.scene, spawnPos, randomType);
+        this.powerUps.push(powerUp);
+    }
+
+    private applyPowerUpToPlayer(powerUp: PowerUp): void {
+        switch (powerUp.type) {
+            case PowerUpType.MoveSpeed:
+                this.player.enableSpeedBoost();
+                break;
+            case PowerUpType.RapidFire:
+                this.player.enableRapidFire();
+                break;
+            case PowerUpType.DoubleShot:
+                this.player.enableDoubleShot();
+                break;
+        }
     }
 }

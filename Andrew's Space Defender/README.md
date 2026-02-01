@@ -1,8 +1,8 @@
 # Space Defender - POC
 
-Un juego tipo Galaga/Space Shooter 2D construido con Babylon.js como prueba de concepto (POC).
+Un juego tipo Galaga/Space Shooter 2D construido con Babylon.js.
 
-## 🎮 Características
+## 🎮 Características principales
 
 - ✅ Cámara fija ortográfica 2D
 - ✅ Nave espacial controlable (teclas de flecha o WASD)
@@ -10,7 +10,20 @@ Un juego tipo Galaga/Space Shooter 2D construido con Babylon.js como prueba de c
 - ✅ Enemigos con 3 tipos diferentes y patrones de movimiento variados
 - ✅ Sistema de colisiones
 - ✅ UI con puntuación y vidas
-- ✅ Sistema de Game Over y reinicio
+- ✅ Sistema de Game Over, reinicio y retorno al menú principal
+- ✅ Menú principal con:
+  - Iniciar juego
+  - Ver historial de scores
+- ✅ Sistema de niveles con jefe por nivel:
+  - Cada nivel aumenta la cantidad y velocidad de los enemigos
+  - El score necesario para invocar al jefe se **duplica** en cada nivel
+  - Si el jugador llega a **15000 puntos**, se muestra mensaje de victoria final
+- ✅ Power-ups con drop muy bajo al destruir enemigos:
+  - Aumento de velocidad de movimiento
+  - Aumento de velocidad de disparo
+  - Disparo doble temporal
+- ✅ Sistema de scores persistente usando `localStorage` (historial visible desde el menú
+  de scores)
 
 ## 🚀 Instalación
 
@@ -40,7 +53,8 @@ El juego se abrirá automáticamente en `http://localhost:5173`
 | Mover izquierda | ← o A |
 | Mover derecha | → o D |
 | Disparar | Espacio o Enter |
-| Reiniciar (Game Over) | Botón en pantalla |
+| Reiniciar (Game Over) | Botón RESTART en pantalla |
+| Volver al menú (Game Over) | Botón MENU en pantalla |
 
 ## 🏗️ Estructura del Proyecto
 
@@ -50,15 +64,16 @@ space-defender-poc/
 │   ├── entities/           # Entidades del juego
 │   │   ├── Player.ts       # Nave del jugador
 │   │   ├── Enemy.ts        # Enemigos
-│   │   └── Projectile.ts   # Proyectiles
+│   │   ├── Projectile.ts   # Proyectiles
+│   │   └── PowerUp.ts      # Mejores / power-ups
 │   ├── systems/            # Sistemas del juego
 │   │   ├── InputSystem.ts  # Manejo de input
 │   │   ├── CollisionSystem.ts  # Detección de colisiones
 │   │   └── SpawnSystem.ts  # Sistema de spawn
 │   ├── managers/           # Managers
-│   │   └── ScoreManager.ts # Gestión de puntuación
+│   │   └── ScoreManager.ts # Gestión de puntuación y guardado en localStorage
 │   ├── scenes/
-│   │   └── GameScene.ts    # Escena principal del juego
+│   │   └── GameScene.ts    # Escena principal del juego (niveles, jefe, power-ups)
 │   └── main.ts             # Punto de entrada
 ├── index.html              # HTML principal
 ├── package.json
@@ -77,18 +92,34 @@ space-defender-poc/
 - Límites de pantalla implementados
 - Movimiento suave con velocidad constante
 
-### Enemigos
-- **3 tipos:**
-  - Básico (rojo) - Movimiento zigzag horizontal
-  - Medio (naranja) - Movimiento en onda sinusoidal
-  - Fuerte (morado) - Movimiento diagonal
+### Enemigos y niveles
+- **3 tipos de enemigos base:**
+  - Básico (LV1) - Movimiento zigzag horizontal
+  - Medio (LV2) - Movimiento en onda sinusoidal
+  - Fuerte (LV3) - Movimiento diagonal
+- Sistema de niveles:
+  - Cada nuevo nivel añade más filas/columnas de enemigos
+  - Se incrementa la velocidad de movimiento de los enemigos
+  - El jefe aparece cuando se alcanza un umbral de score que se **duplica** en cada nivel
 
 ### Gameplay
 - Sistema de vidas (3 inicial)
 - Invulnerabilidad temporal al recibir daño
-- Puntuación por enemigos eliminados (100 puntos cada uno)
-- Spawn continuo de enemigos
+- Puntuación por enemigos eliminados (100 puntos cada uno) y jefes derrotados (1000 puntos)
+- Spawn continuo de enemigos (más agresivo a niveles altos)
 - Game Over cuando vidas llegan a 0
+- Victoria global al alcanzar **15000 puntos**
+
+### Power-ups
+- Drop con probabilidad baja al destruir enemigos
+- Tipos de power-up implementados:
+  - **MoveSpeed**: aumenta velocidad de movimiento del jugador durante unos segundos
+  - **RapidFire**: reduce el tiempo entre disparos durante unos segundos
+  - **DoubleShot**: añade un disparo extra paralelo mientras el efecto está activo
+
+### Sistema de scores
+- Cada partida terminada (por Game Over o victoria) guarda el score en `localStorage`
+- Desde el menú principal puedes ver el historial de scores con fecha y hora
 
 ## 🛠️ Scripts Disponibles
 
@@ -110,23 +141,8 @@ npm run preview
 - **Vite** - Build tool y dev server
 - **HTML5 Canvas** - Renderizado
 
-## 🎯 Alcance del POC
+## 📄 Nota
 
-Este es un **Vertical Slice** que demuestra:
-- ✅ Loop de juego funcional
-- ✅ Mecánicas core (movimiento, disparo, colisiones)
-- ✅ Sistema de puntuación y vidas
-- ✅ Diferentes tipos de enemigos
-- ✅ UI básica pero funcional
-
-**No incluye (fuera del alcance del POC):**
-- Múltiples niveles
-- Power-ups complejos
-- Boss fights
-- Sistema de guardado
-- Menús elaborados
-- Audio
-
-## 📄 Licencia
-
-Este proyecto es una prueba de concepto educativa.
+Este proyecto empezó como una prueba de concepto y se ha extendido con
+mecánicas adicionales (niveles, jefe, power-ups, menú y sistema de scores)
+para hacerlo más cercano a un minijuego completo.

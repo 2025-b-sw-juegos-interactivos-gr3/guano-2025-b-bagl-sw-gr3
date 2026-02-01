@@ -73,6 +73,10 @@ export class Enemy {
         this.mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
     }
 
+    public setSpeedMultiplier(multiplier: number): void {
+        this.speed *= multiplier;
+    }
+
     public update(deltaTime: number): void {
         this.patternTime += deltaTime;
         this.shootCooldown -= deltaTime;
