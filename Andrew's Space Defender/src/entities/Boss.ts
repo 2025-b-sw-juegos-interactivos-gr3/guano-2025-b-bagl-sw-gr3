@@ -109,27 +109,9 @@ export class Boss {
             return projectiles;
         }
 
-        // Shoot pattern based on phase
-        switch (this.phase) {
-            case 0: // Normal - single shot
-                this.shootCooldown = 1.5;
-                projectiles.push(this.createProjectile(0));
-                break;
-
-            case 1: // Aggressive - triple shot
-                this.shootCooldown = 1.2;
-                projectiles.push(this.createProjectile(-0.5));
-                projectiles.push(this.createProjectile(0));
-                projectiles.push(this.createProjectile(0.5));
-                break;
-
-            case 2: // Enraged - spread shot
-                this.shootCooldown = 0.8;
-                for (let i = -2; i <= 2; i++) {
-                    projectiles.push(this.createProjectile(i * 0.4));
-                }
-                break;
-        }
+        // Single slow shot in all phases
+        this.shootCooldown = 2.0; // Slower shooting
+        projectiles.push(this.createProjectile(0));
 
         return projectiles;
     }

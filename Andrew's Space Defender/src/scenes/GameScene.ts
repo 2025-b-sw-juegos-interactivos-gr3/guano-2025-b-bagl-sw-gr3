@@ -302,10 +302,8 @@ export class GameScene {
                     this.boss = null;
                     this.scoreManager.addScore(1000);
                     
-                    // Spawn new wave of enemies
-                    this.bossSpawned = false;
-                    this.enemiesKilled = 0;
-                    this.spawnInitialEnemies();
+                    // YOU WIN!
+                    this.winGame();
                 }
                 continue;
             }
@@ -377,11 +375,34 @@ export class GameScene {
         }
     }
 
+    private winGame(): void {
+        this.gameOver = true;
+        this.audioManager.stopBackgroundMusic();
+
+        // Update final score
+        const finalScoreEl = document.getElementById('final-score');
+        if (finalScoreEl) {
+            finalScoreEl.textContent = this.scoreManager.getScore().toString();
+        }
+
+        // Show you win screen
+        const youWinDiv = document.getElementById('you-win');
+        if (youWinDiv) {
+            youWinDiv.style.display = 'block';
+        }
+    }
+
     public restart(): void {
         // Hide game over screen
         const gameOverDiv = document.getElementById('game-over');
         if (gameOverDiv) {
             gameOverDiv.style.display = 'none';
+        }
+
+        // Hide you win screen
+        const youWinDiv = document.getElementById('you-win');
+        if (youWinDiv) {
+            youWinDiv.style.display = 'none';
         }
 
         // Hide boss health bar

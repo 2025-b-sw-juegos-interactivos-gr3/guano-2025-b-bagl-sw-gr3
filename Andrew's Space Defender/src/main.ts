@@ -41,6 +41,14 @@ class Game {
                 this.gameScene.restart();
             });
         }
+
+        // Handle play again button (after winning)
+        const restartButtonWin = document.getElementById('restart-button-win');
+        if (restartButtonWin) {
+            restartButtonWin.addEventListener('click', () => {
+                this.gameScene.restart();
+            });
+        }
     }
 }
 
