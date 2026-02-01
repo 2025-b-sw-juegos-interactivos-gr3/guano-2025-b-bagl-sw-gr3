@@ -76,6 +76,37 @@
         #restart-button:hover {
             background: #cc0000;
         }
+
+        #boss-health-container {
+            position: absolute;
+            top: 55px;
+            left: 40px;
+            width: 200px;
+            height: 20px;
+            background: #333;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            display: none;
+            overflow: hidden;
+        }
+
+        #boss-health-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff4444);
+            transition: width 0.2s ease-out;
+        }
+
+        #boss-health-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px #000;
+        }
     </style>
 </head>
 
@@ -85,6 +116,11 @@
     <div id="ui-overlay">
         <div id="lives">LIVES: <span id="lives-count">3</span></div>
         <div id="score">SCORE: <span id="score-count">0</span></div>
+
+        <div id="boss-health-container">
+            <div id="boss-health-bar"></div>
+            <div id="boss-health-text">BOSS: 100%</div>
+        </div>
 
         <div id="game-over">
             <div>GAME OVER</div>
