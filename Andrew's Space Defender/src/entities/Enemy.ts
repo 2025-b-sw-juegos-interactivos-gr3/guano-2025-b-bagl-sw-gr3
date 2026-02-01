@@ -3,16 +3,16 @@ import {
     Vector3,
     MeshBuilder,
     StandardMaterial,
-    Color3,
+    Texture,
     Mesh
 } from '@babylonjs/core';
 import { Projectile } from './Projectile';
 
 export class Enemy {
     private scene: Scene;
-    public mesh: Mesh;
+    public mesh!: Mesh;
     public position: Vector3;
-    private type: number; // 0 = basic, 1 = medium, 2 = strong
+    private type: number; // 0 = basic (LV1), 1 = medium (LV2), 2 = strong (LV3)
 
     private speed: number = 2;
     private direction: number = 1;
@@ -30,54 +30,47 @@ export class Enemy {
     }
 
     private createMesh(): void {
-        // Create enemy based on type
-        let color: Color3;
+        // Determine which texture to use based on enemy type
+        let texturePath: string;
         let size: number;
 
         switch (this.type) {
-            case 0: // Basic enemy (red)
-                color = new Color3(1, 0, 0);
-                size = 0.4;
+            case 0: // Basic enemy - Level 1
+                texturePath = '/models/enemiesLV1.png';
+                size = 3.0;
                 break;
-            case 1: // Medium enemy (orange)
-                color = new Color3(1, 0.5, 0);
-                size = 0.5;
+            case 1: // Medium enemy - Level 2
+                texturePath = '/models/enemiesLV2.png';
+                size = 3.2;
                 break;
-            case 2: // Strong enemy (purple)
-                color = new Color3(0.5, 0, 1);
-                size = 0.6;
+            case 2: // Strong enemy - Level 3
+                texturePath = '/models/enemiesLV3.png';
+                size = 3.4;
                 break;
             default:
-                color = new Color3(1, 0, 0);
-                size = 0.4;
+                texturePath = '/models/enemiesLV1.png';
+                size = 3.0;
         }
 
-        // Create enemy body (sphere for simplicity)
-        this.mesh = MeshBuilder.CreateSphere('enemy', {
-            diameter: size * 2,
-            segments: 8
+        // Create a plane to display the enemy sprite
+        this.mesh = MeshBuilder.CreatePlane('enemy', {
+            width: size,
+            height: size
         }, this.scene);
 
+        // Create material with the PNG texture
         const material = new StandardMaterial('enemyMat', this.scene);
-        material.emissiveColor = color;
-        material.diffuseColor = color;
+        material.diffuseTexture = new Texture(texturePath, this.scene);
+        material.diffuseTexture.hasAlpha = true;
+        material.useAlphaFromDiffuseTexture = true;
+        material.emissiveTexture = new Texture(texturePath, this.scene);
+        material.backFaceCulling = false;
+        
         this.mesh.material = material;
-
-        // Add small antenna/indicator on top
-        const antenna = MeshBuilder.CreateBox('antenna', {
-            width: 0.1,
-            height: size * 0.5,
-            depth: 0.1
-        }, this.scene);
-        antenna.position = new Vector3(0, size, 0);
-        antenna.parent = this.mesh;
-
-        const antennaMat = new StandardMaterial('antennaMat', this.scene);
-        antennaMat.emissiveColor = new Color3(1, 1, 0);
-        antennaMat.diffuseColor = new Color3(1, 1, 0);
-        antenna.material = antennaMat;
-
         this.mesh.position = this.position;
+        
+        // Rotate to face the camera (since it's a 2D plane)
+        this.mesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
     }
 
     public update(deltaTime: number): void {
