@@ -4,14 +4,18 @@ import {
     MeshBuilder,
     StandardMaterial,
     Color3,
-    Mesh
+    Mesh,
+    SceneLoader,
+    AbstractMesh
 } from '@babylonjs/core';
+import '@babylonjs/loaders/glTF';
 import { InputSystem } from '../systems/InputSystem';
 import { Projectile } from './Projectile';
 
 export class Player {
     private scene: Scene;
-    public mesh: Mesh;
+    public mesh!: Mesh;
+    private loadedMeshes: AbstractMesh[] = [];
     public position: Vector3;
     public lives: number = 3;
     private bounds: { minX: number; maxX: number; minY: number; maxY: number };
@@ -21,6 +25,7 @@ export class Player {
     private shootDelay: number = 0.25;
     private invulnerable: boolean = false;
     private invulnerableTime: number = 0;
+    private modelLoaded: boolean = false;
 
     constructor(scene: Scene, bounds: any) {
         this.scene = scene;
@@ -28,42 +33,68 @@ export class Player {
         this.position = new Vector3(0, -8, 0);
 
         this.createMesh();
+        this.loadModel();
         this.updateLivesUI();
     }
 
     private createMesh(): void {
-        // Create player ship using basic 3D shapes
+        // Create a placeholder/container mesh (invisible)
         this.mesh = MeshBuilder.CreateBox('player', {
+            width: 0.1,
+            height: 0.1,
+            depth: 0.1
+        }, this.scene);
+        this.mesh.isVisible = false;
+        this.mesh.position = this.position;
+    }
+
+    private async loadModel(): Promise<void> {
+        try {
+            const result = await SceneLoader.ImportMeshAsync(
+                '',
+                '/models/',
+                'nave.glb',
+                this.scene
+            );
+
+            this.loadedMeshes = result.meshes;
+            
+            // Configure loaded meshes
+            result.meshes.forEach((mesh) => {
+                mesh.parent = this.mesh;
+                // Adjust scale - very small size for the game
+                mesh.scaling = new Vector3(0.03, 0.03, 0.03);
+            });
+
+            // Rotate to face up if needed (adjust as necessary)
+            this.mesh.rotation.x = 0;
+            this.mesh.rotation.y = 0;
+            this.mesh.rotation.z = 0;
+
+            this.modelLoaded = true;
+            console.log('Player model loaded successfully!');
+        } catch (error) {
+            console.error('Error loading player model:', error);
+            // Fallback to basic mesh if model fails to load
+            this.createFallbackMesh();
+        }
+    }
+
+    private createFallbackMesh(): void {
+        // Fallback: Create basic ship shape if model fails to load
+        const material = new StandardMaterial('playerMat', this.scene);
+        material.emissiveColor = new Color3(0, 1, 0);
+        material.diffuseColor = new Color3(0, 1, 0);
+
+        const body = MeshBuilder.CreateBox('playerBody', {
             width: 0.8,
             height: 1,
             depth: 0.2
         }, this.scene);
+        body.material = material;
+        body.parent = this.mesh;
 
-        const material = new StandardMaterial('playerMat', this.scene);
-        material.emissiveColor = new Color3(0, 1, 0);
-        material.diffuseColor = new Color3(0, 1, 0);
-        this.mesh.material = material;
-
-        // Add wings (small boxes on sides)
-        const leftWing = MeshBuilder.CreateBox('leftWing', {
-            width: 0.3,
-            height: 0.4,
-            depth: 0.1
-        }, this.scene);
-        leftWing.position = new Vector3(-0.5, -0.2, 0);
-        leftWing.parent = this.mesh;
-        leftWing.material = material;
-
-        const rightWing = MeshBuilder.CreateBox('rightWing', {
-            width: 0.3,
-            height: 0.4,
-            depth: 0.1
-        }, this.scene);
-        rightWing.position = new Vector3(0.5, -0.2, 0);
-        rightWing.parent = this.mesh;
-        rightWing.material = material;
-
-        this.mesh.position = this.position;
+        this.mesh.isVisible = false;
     }
 
     public update(input: InputSystem, deltaTime: number): void {
@@ -148,38 +179,39 @@ export class Player {
     }
 
     private setInvulnerableColor(): void {
-        const material = this.mesh.material as StandardMaterial;
-        if (material) {
-            material.emissiveColor = new Color3(1, 0, 0);
-            material.diffuseColor = new Color3(1, 0, 0);
-        }
-        // Update children
+        // Apply red tint to loaded model meshes
+        this.loadedMeshes.forEach(mesh => {
+            if (mesh.material && mesh.material instanceof StandardMaterial) {
+                mesh.material.emissiveColor = new Color3(1, 0, 0);
+            }
+        });
+        // Also handle child meshes
         this.mesh.getChildMeshes().forEach(child => {
             const childMat = child.material as StandardMaterial;
-            if (childMat) {
+            if (childMat && childMat.emissiveColor) {
                 childMat.emissiveColor = new Color3(1, 0, 0);
-                childMat.diffuseColor = new Color3(1, 0, 0);
             }
         });
     }
 
     private setNormalColor(): void {
-        const material = this.mesh.material as StandardMaterial;
-        if (material) {
-            material.emissiveColor = new Color3(0, 1, 0);
-            material.diffuseColor = new Color3(0, 1, 0);
-        }
-        // Update children
+        // Reset color on loaded model meshes
+        this.loadedMeshes.forEach(mesh => {
+            if (mesh.material && mesh.material instanceof StandardMaterial) {
+                mesh.material.emissiveColor = new Color3(0, 0, 0);
+            }
+        });
+        // Also handle child meshes
         this.mesh.getChildMeshes().forEach(child => {
             const childMat = child.material as StandardMaterial;
-            if (childMat) {
-                childMat.emissiveColor = new Color3(0, 1, 0);
-                childMat.diffuseColor = new Color3(0, 1, 0);
+            if (childMat && childMat.emissiveColor) {
+                childMat.emissiveColor = new Color3(0, 0, 0);
             }
         });
     }
 
     public dispose(): void {
+        this.loadedMeshes.forEach(mesh => mesh.dispose());
         this.mesh.dispose();
     }
 }

@@ -10,7 +10,8 @@
     },
     "dependencies": {
         "@babylonjs/core": "^7.0.0",
-        "@babylonjs/gui": "^7.0.0"
+        "@babylonjs/gui": "^7.0.0",
+        "@babylonjs/loaders": "^7.54.3"
     },
     "devDependencies": {
         "typescript": "^5.3.3",
