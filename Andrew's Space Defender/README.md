@@ -1,125 +1,154 @@
-# Space Defender - POC
+# Space Defender
 
-Un juego tipo Galaga/Space Shooter 2D construido con Babylon.js.
+Un juego tipo Galaga/Space Shooter 2D construido con **Babylon.js** y **TypeScript**.
 
 ## 🎮 Características principales
 
+- ✅ Nave espacial 3D personalizada (modelo GLB)
 - ✅ Cámara fija ortográfica 2D
-- ✅ Nave espacial controlable (teclas de flecha o WASD)
-- ✅ Sistema de disparo (Espacio o Enter)
-- ✅ Enemigos con 3 tipos diferentes y patrones de movimiento variados
+- ✅ Controles suaves (flechas o A/D + Espacio para disparar)
+- ✅ 3 tipos de enemigos con sprites PNG personalizados
+- ✅ **Boss Final** que aparece al alcanzar 2000 puntos
+- ✅ Barra de vida del Boss con porcentaje
 - ✅ Sistema de colisiones
+- ✅ **Efectos de partículas** (explosiones al destruir enemigos)
+- ✅ **Sistema de audio** (disparo, explosión, música de fondo)
 - ✅ UI con puntuación y vidas
-- ✅ Sistema de Game Over, reinicio y retorno al menú principal
-- ✅ Menú principal con:
-  - Iniciar juego
-  - Ver historial de scores
-- ✅ Sistema de niveles con jefe por nivel:
-  - Cada nivel aumenta la cantidad y velocidad de los enemigos
-  - El score necesario para invocar al jefe se **duplica** en cada nivel
-  - Si el jugador llega a **15000 puntos**, se muestra mensaje de victoria final
-- ✅ Power-ups con drop muy bajo al destruir enemigos:
-  - Aumento de velocidad de movimiento
-  - Aumento de velocidad de disparo
-  - Disparo doble temporal
-- ✅ Sistema de scores persistente usando `localStorage` (historial visible desde el menú
-  de scores)
+- ✅ Pantalla de **Game Over** con botón de reinicio
+- ✅ Pantalla de **Victoria** al derrotar al Boss
+- ✅ Fondo espacial con estrellas generadas proceduralmente
 
 ## 🚀 Instalación
 
 ### Prerrequisitos
+
 - Node.js (v18 o superior)
-- npm o yarn
+- npm
 
 ### Pasos
 
 1. **Instalar dependencias:**
+
 ```bash
 npm install
 ```
 
 2. **Iniciar servidor de desarrollo:**
+
 ```bash
 npm run dev
 ```
 
 3. **Abrir en navegador:**
-El juego se abrirá automáticamente en `http://localhost:5173`
+   El juego se abrirá automáticamente en `http://localhost:5173`
 
 ## 🎯 Controles
 
-| Acción | Teclas |
-|--------|--------|
-| Mover izquierda | ← o A |
-| Mover derecha | → o D |
-| Disparar | Espacio o Enter |
-| Reiniciar (Game Over) | Botón RESTART en pantalla |
-| Volver al menú (Game Over) | Botón MENU en pantalla |
+| Acción                    | Teclas                       |
+| ------------------------- | ---------------------------- |
+| Mover izquierda           | ← o A                        |
+| Mover derecha             | → o D                        |
+| Disparar                  | Espacio                      |
+| Reiniciar (Game Over)     | Botón RESTART en pantalla    |
+| Jugar de nuevo (Victoria) | Botón PLAY AGAIN en pantalla |
 
 ## 🏗️ Estructura del Proyecto
 
 ```
-space-defender-poc/
+Andrew's Space Defender/
+├── public/
+│   ├── models/
+│   │   ├── nave.glb           # Modelo 3D de la nave del jugador
+│   │   ├── enemiesLV1.png     # Sprite enemigo nivel 1
+│   │   ├── enemiesLV2.png     # Sprite enemigo nivel 2
+│   │   └── enemiesLV3.png     # Sprite enemigo nivel 3 / Boss
+│   ├── sounds/
+│   │   ├── disparo.mp3        # (Opcional) Sonido de disparo
+│   │   ├── explosion.mp3      # (Opcional) Sonido de explosión
+│   │   └── musica_fondo.mp3   # (Opcional) Música de fondo
+│   └── textures/              # Texturas adicionales
 ├── src/
-│   ├── entities/           # Entidades del juego
-│   │   ├── Player.ts       # Nave del jugador
-│   │   ├── Enemy.ts        # Enemigos
-│   │   ├── Projectile.ts   # Proyectiles
-│   │   └── PowerUp.ts      # Mejores / power-ups
-│   ├── systems/            # Sistemas del juego
-│   │   ├── InputSystem.ts  # Manejo de input
-│   │   ├── CollisionSystem.ts  # Detección de colisiones
-│   │   └── SpawnSystem.ts  # Sistema de spawn
-│   ├── managers/           # Managers
-│   │   └── ScoreManager.ts # Gestión de puntuación y guardado en localStorage
+│   ├── entities/
+│   │   ├── Player.ts          # Nave del jugador (carga modelo GLB)
+│   │   ├── Enemy.ts           # Enemigos (sprites PNG)
+│   │   ├── Boss.ts            # Jefe final
+│   │   └── Projectile.ts      # Proyectiles
+│   ├── systems/
+│   │   ├── InputSystem.ts     # Manejo de input
+│   │   ├── CollisionSystem.ts # Detección de colisiones
+│   │   ├── SpawnSystem.ts     # Sistema de spawn de enemigos
+│   │   └── ParticleSystem.ts  # Sistema de explosiones VFX
+│   ├── managers/
+│   │   ├── ScoreManager.ts    # Gestión de puntuación
+│   │   └── AudioManager.ts    # Gestión de audio
 │   ├── scenes/
-│   │   └── GameScene.ts    # Escena principal del juego (niveles, jefe, power-ups)
-│   └── main.ts             # Punto de entrada
-├── index.html              # HTML principal
+│   │   └── GameScene.ts       # Escena principal del juego
+│   └── main.ts                # Punto de entrada
+├── index.html                 # HTML principal con UI
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+├── ASSETS.md                  # Documentación de assets
+└── README.md
 ```
 
 ## 🎨 Características Técnicas
 
 ### Cámara
+
 - **Tipo:** Ortográfica fija
 - **Vista:** Cenital (top-down)
-- **Proyección:** 2D sin perspectiva 3D
+- **Proyección:** 2D sin perspectiva
 
-### Movimiento
-- Nave del jugador: solo horizontal (izquierda/derecha)
-- Límites de pantalla implementados
-- Movimiento suave con velocidad constante
+### Jugador
 
-### Enemigos y niveles
-- **3 tipos de enemigos base:**
-  - Básico (LV1) - Movimiento zigzag horizontal
-  - Medio (LV2) - Movimiento en onda sinusoidal
-  - Fuerte (LV3) - Movimiento diagonal
-- Sistema de niveles:
-  - Cada nuevo nivel añade más filas/columnas de enemigos
-  - Se incrementa la velocidad de movimiento de los enemigos
-  - El jefe aparece cuando se alcanza un umbral de score que se **duplica** en cada nivel
-
-### Gameplay
+- Modelo 3D personalizado (GLB)
+- Escala: 0.05 (5% del tamaño original)
+- Movimiento horizontal con límites de pantalla
 - Sistema de vidas (3 inicial)
-- Invulnerabilidad temporal al recibir daño
-- Puntuación por enemigos eliminados (100 puntos cada uno) y jefes derrotados (1000 puntos)
-- Spawn continuo de enemigos (más agresivo a niveles altos)
-- Game Over cuando vidas llegan a 0
-- Victoria global al alcanzar **15000 puntos**
+- Invulnerabilidad temporal al recibir daño (parpadeo rojo)
 
-### Power-ups
-- Drop con probabilidad baja al destruir enemigos
-- Tipos de power-up implementados:
-  - **MoveSpeed**: aumenta velocidad de movimiento del jugador durante unos segundos
-  - **RapidFire**: reduce el tiempo entre disparos durante unos segundos
-  - **DoubleShot**: añade un disparo extra paralelo mientras el efecto está activo
+### Enemigos
 
-### Sistema de scores
-- Cada partida terminada (por Game Over o victoria) guarda el score en `localStorage`
-- Desde el menú principal puedes ver el historial de scores con fecha y hora
+| Tipo             | Archivo        | Tamaño | Puntos |
+| ---------------- | -------------- | ------ | ------ |
+| Nivel 1 (Básico) | enemiesLV1.png | 3.0    | 100    |
+| Nivel 2 (Medio)  | enemiesLV2.png | 3.2    | 100    |
+| Nivel 3 (Fuerte) | enemiesLV3.png | 3.4    | 100    |
+
+**Patrones de movimiento:**
+
+- Zigzag horizontal
+- Onda sinusoidal
+- Diagonal descendente
+
+### Boss Final
+
+- Aparece al alcanzar **2000 puntos**
+- Usa sprite enemiesLV3.png escalado a 8.0 unidades
+- **10 puntos de vida**
+- Dispara un proyectil cada 2 segundos
+- Al derrotarlo: **¡VICTORIA!** (+1000 puntos)
+
+### Sistema de Audio
+
+- **Sonidos personalizados:** Carga archivos MP3 de `/public/sounds/`
+- **Sonidos generados:** Web Audio API como fallback automático
+  - Disparo: Onda cuadrada descendente
+  - Explosión: Ruido blanco filtrado
+  - Música: Melodía arcade simple
+
+### Efectos Visuales (VFX)
+
+- Sistema de partículas para explosiones
+- Colores: Amarillo → Naranja → Rojo
+- Blend mode aditivo (efecto de brillo)
+- 3 tamaños: Normal, Pequeño (chispas), Grande (boss)
+
+### Fondo Espacial
+
+- 200 estrellas generadas proceduralmente
+- Colores variados: Blanco, Azul, Amarillo
+- Fondo: Azul muy oscuro (#050514)
 
 ## 🛠️ Scripts Disponibles
 
@@ -136,13 +165,30 @@ npm run preview
 
 ## 📝 Tecnologías
 
-- **Babylon.js 7.0** - Motor de juego 3D/2D
+- **Babylon.js 7.0** - Motor de juego 3D
+- **@babylonjs/loaders** - Carga de modelos GLB
 - **TypeScript** - Lenguaje de programación
 - **Vite** - Build tool y dev server
-- **HTML5 Canvas** - Renderizado
+- **Web Audio API** - Generación de sonidos
 
-## 📄 Nota
+## 📂 Documentación Adicional
 
-Este proyecto empezó como una prueba de concepto y se ha extendido con
-mecánicas adicionales (niveles, jefe, power-ups, menú y sistema de scores)
-para hacerlo más cercano a un minijuego completo.
+- [ASSETS.md](ASSETS.md) - Documentación completa de todos los assets del juego
+
+## 🎯 Cómo Jugar
+
+1. Mueve tu nave con las flechas ← → o teclas A/D
+2. Dispara con la barra espaciadora
+3. Destruye enemigos para ganar puntos (100 pts c/u)
+4. Al llegar a 2000 puntos aparece el **Boss Final**
+5. Derrota al Boss para ganar el juego
+6. ¡Cuidado! Tienes solo 3 vidas
+
+## 👨‍💻 Desarrollador
+
+**Andrew**  
+2025
+
+---
+
+_Space Defender - Un juego arcade estilo Galaga desarrollado con Babylon.js_
